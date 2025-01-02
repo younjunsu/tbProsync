@@ -1,15 +1,25 @@
 #!/bin/bash
 
-# SOURCE TARGET 확인
+# SOURCE/TARGET 구성
 PROSYNC_SOURCE_MODE=TAC
 PROSYNC_TARGET_MODE=TSC
 PROSYNC_SOURCE_TOP_ID=prosync_sync
 PROSYNC_TARGET_TOP_ID=${PROSYNC_SOURCE_TOP_ID}
 
-# SOURCE/TARGET SQL 수행
+# SOURCE/TARGET 유저
+PROSYNC_SOURCE_USER=prosync
+PROSYNC_TARGET_USER=prosync
+
+# SOURCE/TARGET 유저
+PROSYNC_SOURCE_USER=prosync
+PROSYNC_TARGET_USER=prosync
+
+# SOURCE/TARGET 디비 링크
 PROSYNC_SOURCE_DBLINK=p_source
 PROSYNC_TARGET_DBLINK=p_target
 
+
+#####################################################################################
 # SOURCE/TARGET 동기화 차이 확인
 PROSYNC_SOURCE_TSN=$((RANDOM % 32767)) #랜덤 16비트 정수의 최대 값 32767
 PROSYNC_TARGET_TSN=$((RANDOM % 32767)) #랜덤 16비트 정수의 최대 값 32767
@@ -36,9 +46,9 @@ clear
 printf "############################################################################################################\n"
 printf " ProSync GAP TSN Checking\n"
 printf "############################################################################################################\n"
-printf "  %-30s %-30s %-30s\n" "SOURCE(${PROSYNC_SOURCE_MODE})" "TARGET(${PROSYNC_TARGET_MODE})" "TSN GAP"
+printf "  %-30s %-30s %-30s\n" "SOURCE(${PROSYNC_SOURCE_MODE})" "TARGET(${PROSYNC_TARGET_MODE})" "TSN GAP/CURRENT TIME"
 printf " %-30s %-30s %-30s\n" "------------------" "------------------" "------------------------------------------"
-printf "  %-30s %-30s %-30s\n" "${PROSYNC_SOURCE_TOP_ID}" "${PROSYNC_TARGET_TOP_ID}" "GAP: ${PROSYNC_TSN_GAP} (CUR: ${PROSYNC_CURRENT_TIME})"
+printf "  %-30s %-30s %-30s\n" "${PROSYNC_SOURCE_USER}" "${PROSYNC_TARGET_USER}" "GAP: ${PROSYNC_TSN_GAP} (CUR: ${PROSYNC_CURRENT_TIME})"
 #printf "  %-30s %-30s %-30s\n" "" "" "${PROSYNC_CURRENT_TIME}"
 printf "\n"
 printf "############################################################################################################\n"
