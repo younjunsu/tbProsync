@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SOURCE DB/USR
+DB_USER=sys
+DB_PASS=tibero
+
 # SOURCE/TARGET 구성
 PROSYNC_SOURCE_MODE=TAC
 PROSYNC_TARGET_MODE=TSC
@@ -44,16 +48,29 @@ PROSYNC_SECONDS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP % 60))  # 초
 
 
 function_source_target_gap(){
-
+2>/dev/null
 # 소스 TIME/TSN 구하기
 #  select
-#  (sysdate - to_date('1970-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) * 86400 AS unix_timestamp,
-#  current_tsn
+#  (sysdate - to_date('1970-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) * 86400 as source_unix_timestamp,
+#  current_tsn as source_tsn
 #  FROM 
 #  v$database;
+SOURCE_TIME_TSN=`tbsql ${DB_USER}/${DB_PASS} -s <<EOF
+set pagesize 0
+set feedback off
+SELECT
+(SYSDATE - TO_DATE('1970-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) * 86400 AS unix_timestamp,
+current_tsn
+FROM 
+v\\$database;
+EOF`
+
 
 # 타겟 TIME/TSN 구하기
-#  select time, tsn from prs_lct
+#  select 
+#  time source_unix_timestamp as target_unix_timestamp,
+#  tsn as target_tsn
+#  from prs_lct;
 
 }
 
@@ -91,6 +108,5 @@ echo "  * TARGET META"
 echo "   - PROSYNC_TARGET_MODE: ${PROSYNC_TARGET_MODE}"
 echo "   - PROSYNC_TARGET_TOP_ID: ${PROSYNC_TARGET_TOP_ID}"
 echo "   - PROSYNC_TARGET_DBLINK: ${PROSYNC_TARGET_DBLINK}"
-echo ""
 echo ""
 echo ""
