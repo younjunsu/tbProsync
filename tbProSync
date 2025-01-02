@@ -42,6 +42,24 @@ PROSYNC_MINUTES_TIME_GAP=$(((PROSYNC_UNIX_TIME_GAP % 3600) / 60))  # 분
 PROSYNC_SECONDS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP % 60))  # 초
 
 
+
+function_source_target_gap(){
+
+# 소스 TIME/TSN 구하기
+#  select
+#  (sysdate - to_date('1970-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) * 86400 AS unix_timestamp,
+#  current_tsn
+#  FROM 
+#  v$database;
+
+# 타겟 TIME/TSN 구하기
+#  select time, tsn from prs_lct
+
+}
+
+
+function_source_target_gap
+
 clear
 echo ""
 printf "############################################################################################################\n"
