@@ -1,24 +1,68 @@
 #!/bin/bash
 
+# SOURCE TARGET 확인
+PROSYNC_SOURCE_MODE=TAC
+PROSYNC_TARGET_MODE=TSC
+PROSYNC_SOURCE_TOP_ID=prosync_sync
+PROSYNC_TARGET_TOP_ID=${PROSYNC_SOURCE_TOP_ID}
 
-echo "============================="
-echo "Prosync Monitor for 4"
-echo "============================="
-echo "===================================================================================================="
-echo "Current Time: "`date`
-echo " "
-echo "===================================================================================================="
-echo "Sync Way" + " SOURCE TSN   :   TARGET TSN    : TSN_GAP "
-echo "===================================================================================================="
-echo "소스->타겟 : TSN 차이 입력"
-echo "===================================================================================================="
-echo " "
-echo "CURENT_TIME         :       LAST COMMIT TIME"
-echo "--<U3->AH>---------------------------------------------------------------------------------- "
-echo sdf.format(d).toString() +" / "+ sMon.getTXtime("p_u3","p_ah"));// 수정 
-echo "--<AH->U3>---------------------------------------------------------------------------------- "
-echo sdf.format(d).toString() +" / "+ sMon.getTXtime("p_ah","p_u3"));// 수정 
-echo " "
-echo " "
-echo " "
-echo " "
+# SOURCE/TARGET SQL 수행
+PROSYNC_SOURCE_DBLINK=p_source
+PROSYNC_TARGET_DBLINK=p_target
+
+# SOURCE/TARGET 동기화 차이 확인
+PROSYNC_SOURCE_TSN=$((RANDOM % 32767)) #랜덤 16비트 정수의 최대 값 32767
+PROSYNC_TARGET_TSN=$((RANDOM % 32767)) #랜덤 16비트 정수의 최대 값 32767
+PROSYNC_TSN_GAP=$((PROSYNC_SOURCE_TSN - PROSYNC_TARGET_TSN)) #랜덤 16비트 정수의 최대 값 32767
+
+PROSYNC_CURRENT_TIME=`date +%Y/%m/%d" "%T`
+
+PROSYNC_SOURCE_TIME=`date +%Y/%m/%d" "%T`
+PROSYNC_TARGET_TIME=`date +%Y/%m/%d" "%T`
+
+PROSYNC_TARGET_TSN=$((RANDOM % 32767)) #랜덤 16비트 정수의 최대 값 32767
+
+PROSYNC_SOURCE_UNIX_TIME=`date +%s`
+PROSYNC_TARGET_UNIX_TIME=`date +%s`
+PROSYNC_TARGET_UNIX_TIME=$((PROSYNC_TARGET_UNIX_TIME - 1))
+PROSYNC_UNIX_TIME_GAP=$((PROSYNC_SOURCE_UNIX_TIME - PROSYNC_TARGET_UNIX_TIME))
+
+ROSYNC_HOURS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP / 3600))  # 시간
+PROSYNC_MINUTES_TIME_GAP=$(((PROSYNC_UNIX_TIME_GAP % 3600) / 60))  # 분
+PROSYNC_SECONDS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP % 60))  # 초
+
+
+clear
+printf "############################################################################################################\n"
+printf " ProSync GAP TSN Checking\n"
+printf "############################################################################################################\n"
+printf "  %-30s %-30s %-30s\n" "SOURCE(${PROSYNC_SOURCE_MODE})" "TARGET(${PROSYNC_TARGET_MODE})" "TSN GAP"
+printf " %-30s %-30s %-30s\n" "------------------" "------------------" "------------------------------------------"
+printf "  %-30s %-30s %-30s\n" "${PROSYNC_SOURCE_TOP_ID}" "${PROSYNC_TARGET_TOP_ID}" "GAP: ${PROSYNC_TSN_GAP} (CUR: ${PROSYNC_CURRENT_TIME})"
+#printf "  %-30s %-30s %-30s\n" "" "" "${PROSYNC_CURRENT_TIME}"
+printf "\n"
+printf "############################################################################################################\n"
+printf " ProSync SOURCE/TARGET TSN Checking\n"
+printf "############################################################################################################\n"
+echo "   - CURRENT TIME: ${PROSYNC_CURRENT_TIME}"
+echo "   - SOURCE TSN(TIME): ${PROSYNC_SOURCE_TSN} (apply time: ${PROSYNC_SOURCE_TIME})"
+echo "   - TARGET TSN(TIME): ${PROSYNC_TARGET_TSN} (apply time: ${PROSYNC_TARGET_TIME})"
+echo "   - GAP TIME: ${ROSYNC_HOURS_TIME_GAP} hours, ${PROSYNC_MINUTES_TIME_GAP} minutes, ${PROSYNC_SECONDS_TIME_GAP} seconds"
+echo "   - GAP TSN: ${PROSYNC_TSN_GAP}"
+echo ""
+printf "############################################################################################################\n"
+printf " ProSync Meta Checking\n"
+printf "############################################################################################################\n"
+echo "  * SOURCE META"
+echo "   - PROSYNC_SOURCE_MODE: ${PROSYNC_SOURCE_MODE}"
+echo "   - PROSYNC_SOURCE_TOP_ID: ${PROSYNC_SOURCE_TOP_ID}"
+echo "   - PROSYNC_SOURCE_DBLINK: ${PROSYNC_SOURCE_DBLINK}"
+echo
+echo "  * TARGET META"
+echo "   - PROSYNC_TARGET_MODE: ${PROSYNC_TARGET_MODE}"
+echo "   - PROSYNC_TARGET_TOP_ID: ${PROSYNC_TARGET_TOP_ID}"
+echo "   - PROSYNC_TARGET_DBLINK: ${PROSYNC_TARGET_DBLINK}"
+echo ""
+printf "############################################################################################################\n"
+echo ""
+echo ""
