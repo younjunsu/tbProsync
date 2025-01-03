@@ -59,7 +59,7 @@ SOURCE_TIME_TSN=`tbsql ${DB_USER}/${DB_PASS} -s <<EOF
 set pagesize 0
 set feedback off
 SELECT
-(SYSDATE - TO_DATE('1970-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) * 86400 AS unix_timestamp,
+(SYSDATE - TO_DATE('1970-01-01 00:00:00', 'YYYY/MM/DD HH24:MI:SS')) * 86400 AS unix_timestamp,
 current_tsn
 FROM 
 v\\$database;
@@ -82,7 +82,7 @@ CURRENT_TIME=`tbsql ${DB_USER}/${DB_PASS} -s <<EOF
 set pagesize 0
 set feedback off
 SELECT
-(SYSDATE - TO_DATE('1970-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) * 86400 AS unix_timestamp
+(SYSDATE - TO_DATE('1970-01-01 00:00:00', 'YYYY/MM/DD HH24:MI:SS')) * 86400 AS unix_timestamp
 FROM 
 v\\$database;
 EOF`
