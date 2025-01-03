@@ -1,28 +1,135 @@
 #!/bin/bash
 
 # SOURCE DB/USR
-DB_USER=sys
-DB_PASS=tibero
+SOURCE_DB_USER=sys
+SOURCE_DB_PASS=tibero
 
 # SOURCE/TARGET 구성
-PROSYNC_SOURCE_MODE=TAC
-PROSYNC_TARGET_MODE=TAC
-PROSYNC_SOURCE_TOP_ID=prosync_sync
-PROSYNC_TARGET_TOP_ID=${PROSYNC_SOURCE_TOP_ID}
+SOURCE_MODE=TAC
+TARGET_MODE=TAC
 
-# SOURCE/TARGET 유저
-PROSYNC_SOURCE_USER=prosync
-PROSYNC_TARGET_USER=prosync
+# ProSync
+PROSYNC_TOP_ID=prosync_sync
 
-# SOURCE/TARGET 유저
-PROSYNC_SOURCE_USER=prosync
-PROSYNC_TARGET_USER=prosync
+# ProSync SOURCE/TARGET 유저
+PROSYNC_SOURCE_USER=sys
+PROSYNC_TARGET_USER=sys
 
-# SOURCE/TARGET 디비 링크
+# ProSync SOURCE/TARGET 디비 링크
 PROSYNC_SOURCE_DBLINK=p_source
 PROSYNC_TARGET_DBLINK=p_target
 
+#####################################################################################
+function_monitor(){
+# 소스 
+SOURCE_DATE_TSN=`tbsql ${SOURCE_DB_USER}/${SOURCE_DB_PASS} -s <<EOF
+set pagesize 0
+set feedback off
+SELECT
+'success'||','||
+to_char(sysdate,'YYYY/MM/DD HH24:MI:SS')||','||
+TRUNC((CAST(sysdate as date) - TO_DATE('1970-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) * 86400)||','||
+current_tsn as source_date_tsn
+FROM 
+v\\$database;
+EOF`
 
+
+# 타겟 
+TARGET_DATE_TSN=`tbsql ${SOURCE_DB_USER}/${SOURCE_DB_PASS} -s <<EOF
+set pagesize 0
+set feedback off
+select
+'success'||','||
+to_char(time,'YYYY/MM/DD HH24:MI:SS')||','||
+TRUNC((CAST(time as date) - TO_DATE('1970-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) * 86400)||','||
+tsn as target_date_tsn
+from \${PROSYNC_TARGET_USER}.prs_lct@\${PROSYNC_TARGET_DBLINK};
+EOF`
+
+PROSYNC_CURRENT_TIME=`echo ${SOURCE_DATE_TSN} |awk -F , '{print $2}'`
+PROSYNC_SOURCE_TIME=`echo ${SOURCE_DATE_TSN} |awk -F , '{print $2}'`
+PROSYNC_SOURCE_UNIX_TIME=`echo ${SOURCE_DATE_TSN} |awk -F , '{print $3}'`
+PROSYNC_SOURCE_TSN=`echo ${SOURCE_DATE_TSN} |awk -F , '{print $4}'`
+PROSYNC_TARGET_TIME=`echo ${TARGET_DATE_TSN} |awk -F , '{print $2}'`
+PROSYNC_TARGET_UNIX_TIME=`echo ${TARGET_DATE_TSN} |awk -F , '{print $3}'`
+PROSYNC_TARGET_TSN=`echo ${TARGET_DATE_TSN} |awk -F , '{print $4}'`
+PROSYNC_UNIX_TIME_GAP=$((PROSYNC_SOURCE_UNIX_TIME - PROSYNC_TARGET_UNIX_TIME))
+PROSYNC_HOURS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP / 3600))  # 시간
+PROSYNC_MINUTES_TIME_GAP=$(((PROSYNC_UNIX_TIME_GAP % 3600) / 60))  # 분
+PROSYNC_SECONDS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP % 60))  # 초
+PROSYNC_TSN_GAP=$((PROSYNC_SOURCE_TSN - PROSYNC_TARGET_TSN))
+
+clear
+echo ""
+printf "############################################################################################################\n"
+printf " ProSync GAP TSN Checking\n"
+printf "############################################################################################################\n"
+printf "  %-30s %-30s %-30s\n" "SOURCE(${SOURCE_MODE})" "TARGET(${TARGET_MODE})" "TSN GAP/CURRENT TIME"
+printf " %-30s %-30s %-30s\n" "------------------" "------------------" "------------------------------------------"
+printf "  %-30s %-30s %-30s\n" "${PROSYNC_SOURCE_USER}" "${PROSYNC_TARGET_USER}" "GAP: ${PROSYNC_TSN_GAP} (CUR: ${PROSYNC_CURRENT_TIME})"
+printf "\n"
+printf "############################################################################################################\n"
+printf " ProSync SOURCE/TARGET TSN Checking\n"
+printf "############################################################################################################\n"
+printf "   - CURRENT TIME      : %-10s\n" "$PROSYNC_CURRENT_TIME"
+printf "   - SOURCE TSN(TIME)  : %-10d         (apply time: %-20s)\n" "$PROSYNC_SOURCE_TSN" "$PROSYNC_SOURCE_TIME"
+printf "   - TARGET TSN(TIME)  : %-10d         (apply time: %-20s)\n" "$PROSYNC_TARGET_TSN" "$PROSYNC_TARGET_TIME"
+printf "   - SOURCE/TARGET GAP : %-10d         (gap time: %-2d hours, %-2d minutes, %-2d seconds)\n" \
+       "$PROSYNC_TSN_GAP" "$PROSYNC_HOURS_TIME_GAP" "$PROSYNC_MINUTES_TIME_GAP" "$PROSYNC_SECONDS_TIME_GAP"
+printf "\n"
+printf "############################################################################################################\n"
+printf " ProSync Meta Checking\n"
+printf "############################################################################################################\n"
+echo "   * Topoloys ID : ${PROSYNC_TOP_ID}"
+echo "  -------------------------------------------------"
+echo "    * SOURCE META"
+echo "     - PROSYNC_SOURCE_MODE: ${SOURCE_DB_USER}"
+echo "     - PROSYNC_SOURCE_USER ${PROSYNC_SOURCE_USER}"
+echo "     - PROSYNC_SOURCE_DBLINK: ${PROSYNC_SOURCE_DBLINK}"
+echo ""
+echo "    * TARGET META"
+echo "     - PROSYNC_TARGET_MODE: ${TARGET_MODE}"
+echo "     - PROSYNC_TARGET_USER: ${PROSYNC_TARGET_USER}"
+echo "     - PROSYNC_TARGET_DBLINK: ${PROSYNC_TARGET_DBLINK}"
+echo ""
+echo ""
+}
+
+function_help(){
+    echo "Usage: ./tbProsync [OPTION]"
+    echo ""
+    echo "Options:"
+    echo "  sync           Synchronize data between source and target."
+    echo "  monitor, mon, pmon"
+    echo "                 Monitor synchronization processes and statuses."
+    echo "  help           Display this help message."
+    echo ""
+    echo "Examples:"
+    echo "  ./tbProsync pmon         # Monitor synchronization processes."
+    echo "  ./tbProsync help         # Show help message."
+    echo ""
+    echo "For more information, refer to the user manual or contact support."
+}
+
+TBPROSYNC_OPTION1=$1
+
+case ${TBPROSYNC_OPTION1} in
+       "sync")   
+              function_sync_check
+       ;;
+       "monitor"|"mon"|"pmon")
+              function_monitor
+       ;;
+       *)
+              function_help
+       ;;
+esac
+
+
+
+#####################################################################################
+# 디버깅 소스
 #####################################################################################
 # 테스트
 # SOURCE/TARGET 동기화 차이 확인
@@ -45,103 +152,3 @@ PROSYNC_TARGET_DBLINK=p_target
 # ROSYNC_HOURS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP / 3600))  # 시간
 # PROSYNC_MINUTES_TIME_GAP=$(((PROSYNC_UNIX_TIME_GAP % 3600) / 60))  # 분
 # PROSYNC_SECONDS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP % 60))  # 초
-
-
-
-function_monitor(){
-# 소스 
-SOURCE_DATE_TSN=`tbsql ${DB_USER}/${DB_PASS} -s <<EOF
-set pagesize 0
-set feedback off
-SELECT
-'success'||','||
-to_char(sysdate,'YYYY/MM/DD HH24:MI:SS')||','||
-TRUNC((CAST(sysdate as date) - TO_DATE('1970-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) * 86400)||','||
-current_tsn as source_date_tsn
-FROM 
-v\\$database;
-EOF`
-
-
-# 타겟 
-TARGET_DATE_TSN=`tbsql ${DB_USER}/${DB_PASS} -s <<EOF
-set pagesize 0
-set feedback off
-select
-'success'||','||
-to_char(time,'YYYY/MM/DD HH24:MI:SS')||','||
-TRUNC((CAST(time as date) - TO_DATE('1970-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) * 86400)||','||
-tsn as target_date_tsn
-from prs_lct;
-EOF`
-
-PROSYNC_CURRENT_TIME=`echo ${SOURCE_DATE_TSN} |awk -F , '{print $2}'`
-PROSYNC_SOURCE_TIME=`echo ${SOURCE_DATE_TSN} |awk -F , '{print $2}'`
-PROSYNC_SOURCE_UNIX_TIME=`echo ${SOURCE_DATE_TSN} |awk -F , '{print $3}'`
-PROSYNC_SOURCE_TSN=`echo ${SOURCE_DATE_TSN} |awk -F , '{print $4}'`
-PROSYNC_TARGET_TIME=`echo ${TARGET_DATE_TSN} |awk -F , '{print $2}'`
-PROSYNC_TARGET_UNIX_TIME=`echo ${TARGET_DATE_TSN} |awk -F , '{print $3}'`
-PROSYNC_TARGET_TSN=`echo ${TARGET_DATE_TSN} |awk -F , '{print $4}'`
-PROSYNC_UNIX_TIME_GAP=$((PROSYNC_SOURCE_UNIX_TIME - PROSYNC_TARGET_UNIX_TIME))
-PROSYNC_HOURS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP / 3600))  # 시간
-PROSYNC_MINUTES_TIME_GAP=$(((PROSYNC_UNIX_TIME_GAP % 3600) / 60))  # 분
-PROSYNC_SECONDS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP % 60))  # 초
-PROSYNC_TSN_GAP=$((PROSYNC_SOURCE_TSN - PROSYNC_TARGET_TSN))
-
-clear
-echo ""
-printf "############################################################################################################\n"
-printf " ProSync GAP TSN Checking\n"
-printf "############################################################################################################\n"
-printf "  %-30s %-30s %-30s\n" "SOURCE(${PROSYNC_SOURCE_MODE})" "TARGET(${PROSYNC_TARGET_MODE})" "TSN GAP/CURRENT TIME"
-printf " %-30s %-30s %-30s\n" "------------------" "------------------" "------------------------------------------"
-printf "  %-30s %-30s %-30s\n" "${PROSYNC_SOURCE_USER}" "${PROSYNC_TARGET_USER}" "GAP: ${PROSYNC_TSN_GAP} (CUR: ${PROSYNC_CURRENT_TIME})"
-printf "\n"
-printf "############################################################################################################\n"
-printf " ProSync SOURCE/TARGET TSN Checking\n"
-printf "############################################################################################################\n"
-printf "   - CURRENT TIME      : %-10s\n" "$PROSYNC_CURRENT_TIME"
-printf "   - SOURCE TSN(TIME)  : %-10d         (apply time: %-20s)\n" "$PROSYNC_SOURCE_TSN" "$PROSYNC_SOURCE_TIME"
-printf "   - TARGET TSN(TIME)  : %-10d         (apply time: %-20s)\n" "$PROSYNC_TARGET_TSN" "$PROSYNC_TARGET_TIME"
-printf "   - SOURCE/TARGET GAP : %-10d         (gap time: %-2d hours, %-2d minutes, %-2d seconds)\n" \
-       "$PROSYNC_TSN_GAP" "$PROSYNC_HOURS_TIME_GAP" "$PROSYNC_MINUTES_TIME_GAP" "$PROSYNC_SECONDS_TIME_GAP"
-printf "\n"
-printf "############################################################################################################\n"
-printf " ProSync Meta Checking\n"
-printf "############################################################################################################\n"
-echo "   * Topoloys ID : ${PROSYNC_SOURCE_TOP_ID}"
-echo "  -------------------------------------------------"
-echo "    * SOURCE META"
-echo "     - PROSYNC_SOURCE_MODE: ${PROSYNC_SOURCE_MODE}"
-echo "     - PROSYNC_SOURCE_USER ${PROSYNC_SOURCE_USER}"
-echo "     - PROSYNC_SOURCE_DBLINK: ${PROSYNC_SOURCE_DBLINK}"
-echo ""
-echo "    * TARGET META"
-echo "     - PROSYNC_TARGET_MODE: ${PROSYNC_TARGET_MODE}"
-echo "     - PROSYNC_TARGET_USER: ${PROSYNC_TARGET_USER}"
-echo "     - PROSYNC_TARGET_DBLINK: ${PROSYNC_TARGET_DBLINK}"
-echo ""
-echo ""
-}
-
-
-
-
-function_help(){
-echo "help"
-}
-
-TBPROSYNC_OPTION1=$1
-
-case ${TBPROSYNC_OPTION1} in
-       "sync")   
-              function_sync_check
-       ;;
-       "monitor"|"mon"|"pmon")
-              function_monitor
-       ;;
-       *)
-              function_help
-       ;;
-esac
-
