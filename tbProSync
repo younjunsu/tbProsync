@@ -25,10 +25,44 @@ PROSYNC_TARGET_DBLINK=p_target
 
 #####################################################################################
 function_error_check(){
-       echo
+       function_error_list(){
+              echo ""
+       }
+
+       function_pmap_error_check(){
+              echo "pmap error"
+       }
+
+       funciton_pmon_error_check(){
+              echo "pmon error"
+       }
+
+       function_plog_error_check(){
+              echo "plog error"
+       }
+
+       case ${TBPROSYNC_MODE} in
+              "pmap")
+                     echo "pmap error check"
+              ;;
+              "pmon")
+                     echo "pmon error check"
+              ;;
+              "plog")
+                     echo "plog error check"
+              ;;
+              *)
+                     echo " ERROR "
+              ;;              
+       esac
 }
 
-function_monitor(){
+
+function_pmap(){
+       echo "function_pmap"
+}
+
+function_pmon(){
 # 소스 
 SOURCE_DATE_TSN=`tbsql ${SOURCE_DB_USER}/${SOURCE_DB_PASS} -s <<EOF
 set pagesize 0
@@ -142,6 +176,10 @@ echo ""
 
 }
 
+function_plog(){
+       echo "function_plog"
+}
+
 function_help(){
        echo "Usage: ./tbProsync [OPTION1] [OPTION2]"
        echo ""
@@ -165,22 +203,28 @@ function_help(){
 TBPROSYNC_OPTION1=$1
 TBPROSYNC_OPTION2=$2
 case ${TBPROSYNC_OPTION1} in
-       "pmap")   
-              function_sync_check
+       "pmap")
+              TBPROSYNC_MODE="pmap"
+              function_error_check
+              function_pmap
        ;;
        "pmon")
+              TBPROSYNC_MODE="pmon"
+              function_error_check
               if [ -z "${TBPROSYNC_OPTION2}" ]; then
-                     function_monitor
+                     function_pmon
               else
                      PMON_INTERVAL=${TBPROSYNC_OPTION2}
                      while true; do
-                            function_monitor
+                            function_pmon
                             sleep ${PMON_INTERVAL}
                      done
               fi             
        ;;
        "plog")
-              echo ""
+              TBPROSYNC_MODE="plog"
+              function_error_check
+              function_plog
        ;;
        *)
               function_help
