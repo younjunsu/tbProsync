@@ -97,7 +97,7 @@ clear
 if [ -z ${PMON_INTERVAL} ]; then
        echo "  ProSync Monitor"
 else 
-       echo "  ProSync Monitor (Interval Mode: ${PMON_INTERVAL} sec)"
+       echo "  ProSync Monitor (Interval ${PMON_INTERVAL} sec)"
 fi
 printf "************************************************************************************************************\n"
 printf " SOURCE/TARGET TSN\n"
