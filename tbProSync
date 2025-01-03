@@ -43,13 +43,13 @@ function_error_check(){
 
        case ${TBPROSYNC_MODE} in
               "pmap")
-                     echo "pmap error check"
+                     function_pmap_error_check
               ;;
               "pmon")
-                     echo "pmon error check"
+                     funciton_pmon_error_check
               ;;
               "plog")
-                     echo "plog error check"
+                     function_plog_error_check
               ;;
               *)
                      echo " ERROR "
