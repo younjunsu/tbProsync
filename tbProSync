@@ -25,6 +25,7 @@ PROSYNC_TARGET_DBLINK=p_target
 
 #####################################################################################
 # 테스트트
+# 테스트
 # SOURCE/TARGET 동기화 차이 확인
 # PROSYNC_SOURCE_TSN=$((RANDOM % 32767)) #랜덤 16비트 정수의 최대 값 32767
 # PROSYNC_TARGET_TSN=$((RANDOM % 32767)) #랜덤 16비트 정수의 최대 값 32767
@@ -48,7 +49,7 @@ PROSYNC_TARGET_DBLINK=p_target
 
 
 
-function_source_target_gap(){
+function_monitor(){
 # 소스 
 SOURCE_DATE_TSN=`tbsql ${DB_USER}/${DB_PASS} -s <<EOF
 set pagesize 0
@@ -87,22 +88,6 @@ PROSYNC_HOURS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP / 3600))  # 시간
 PROSYNC_MINUTES_TIME_GAP=$(((PROSYNC_UNIX_TIME_GAP % 3600) / 60))  # 분
 PROSYNC_SECONDS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP % 60))  # 초
 PROSYNC_TSN_GAP=$((PROSYNC_SOURCE_TSN - PROSYNC_TARGET_TSN))
-echo "$PROSYNC_CURRENT_TIME"
-echo "$PROSYNC_SOURCE_TIME"
-echo "$PROSYNC_SOURCE_UNIX_TIME"
-echo "$PROSYNC_SOURCE_TSN"
-echo "$PROSYNC_TARGET_TIME"
-echo "$PROSYNC_TARGET_UNIX_TIME"
-echo "$PROSYNC_TARGET_TSN"
-echo "$PROSYNC_UNIX_TIME_GAP"
-echo "$PROSYNC_HOURS_TIME_GAP"
-echo "$PROSYNC_MINUTES_TIME_GAP"
-echo "$PROSYNC_SECONDS_TIME_GAP"
-echo "$PROSYNC_TSN_GAP"
-}
-
-
-function_source_target_gap
 
 clear
 echo ""
@@ -112,7 +97,6 @@ printf "########################################################################
 printf "  %-30s %-30s %-30s\n" "SOURCE(${PROSYNC_SOURCE_MODE})" "TARGET(${PROSYNC_TARGET_MODE})" "TSN GAP/CURRENT TIME"
 printf " %-30s %-30s %-30s\n" "------------------" "------------------" "------------------------------------------"
 printf "  %-30s %-30s %-30s\n" "${PROSYNC_SOURCE_USER}" "${PROSYNC_TARGET_USER}" "GAP: ${PROSYNC_TSN_GAP} (CUR: ${PROSYNC_CURRENT_TIME})"
-#printf "  %-30s %-30s %-30s\n" "" "" "${PROSYNC_CURRENT_TIME}"
 printf "\n"
 printf "############################################################################################################\n"
 printf " ProSync SOURCE/TARGET TSN Checking\n"
@@ -126,14 +110,39 @@ printf "\n"
 printf "############################################################################################################\n"
 printf " ProSync Meta Checking\n"
 printf "############################################################################################################\n"
-echo "  * SOURCE META"
-echo "   - PROSYNC_SOURCE_MODE: ${PROSYNC_SOURCE_MODE}"
-echo "   - PROSYNC_SOURCE_TOP_ID: ${PROSYNC_SOURCE_TOP_ID}"
-echo "   - PROSYNC_SOURCE_DBLINK: ${PROSYNC_SOURCE_DBLINK}"
-echo
-echo "  * TARGET META"
-echo "   - PROSYNC_TARGET_MODE: ${PROSYNC_TARGET_MODE}"
-echo "   - PROSYNC_TARGET_TOP_ID: ${PROSYNC_TARGET_TOP_ID}"
-echo "   - PROSYNC_TARGET_DBLINK: ${PROSYNC_TARGET_DBLINK}"
+echo "   * Topoloys ID : ${PROSYNC_SOURCE_TOP_ID}"
+echo "  -------------------------------------------------"
+echo "    * SOURCE META"
+echo "     - PROSYNC_SOURCE_MODE: ${PROSYNC_SOURCE_MODE}"
+echo "     - PROSYNC_SOURCE_USER ${PROSYNC_SOURCE_USER}"
+echo "     - PROSYNC_SOURCE_DBLINK: ${PROSYNC_SOURCE_DBLINK}"
+echo ""
+echo "    * TARGET META"
+echo "     - PROSYNC_TARGET_MODE: ${PROSYNC_TARGET_MODE}"
+echo "     - PROSYNC_TARGET_USER: ${PROSYNC_TARGET_USER}"
+echo "     - PROSYNC_TARGET_DBLINK: ${PROSYNC_TARGET_DBLINK}"
 echo ""
 echo ""
+}
+
+
+
+
+function_help(){
+echo "help"
+}
+
+TBPROSYNC_OPTION1=$1
+
+case ${TBPROSYNC_OPTION1} in
+       "sync")   
+              function_sync_check
+       ;;
+       "monitor"|"mon"|"pmon")
+              function_monitor
+       ;;
+       *)
+              function_help
+       ;;
+esac
+
