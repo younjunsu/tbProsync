@@ -76,8 +76,16 @@ EOF
 `
 
 
-TARGET_DELAY_ARCHIVE_TOTAL_COUNT=`echo "${TARGET_DELAY_ARCHIVE[*]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |wc -l`
-TARGET_DELAY_ARCHIVE_SKIP_COUNT=$((TARGET_DELAY_ARCHIVE_TOTAL_COUNT - 2))
+TARGET_DELAY_ARCHIVE_TOTAL_COUNT=`echo "${TARGET_DELAY_ARCHIVE[@]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |wc -l`
+
+if [ ${TARGET_DELAY_ARCHIVE_TOTAL_COUNT} -le 2 ]; then
+    TARGET_DELAY_ARCHIVE_SKIP_COUNT="0"
+elif [ ${TARGET_DELAY_ARCHIVE_TOTAL_COUNT} -gt 2 ]; then
+    TARGET_DELAY_ARCHIVE_SKIP_COUNT=$((TARGET_DELAY_ARCHIVE_TOTAL_COUNT - 2))
+else
+       TARGET_DELAY_ARCHIVE_SKIP_COUNT="error"
+fi
+
 
 
 clear
@@ -103,7 +111,7 @@ printf "************************************************************************
 echo "   * SOURCE GAP ARCHIVE  (Delay Count: ${TARGET_DELAY_ARCHIVE_TOTAL_COUNT})"
 echo "  -------------------------------------------------"
 echo "${TARGET_DELAY_ARCHIVE[*]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |head -n 1
-echo "              ... skip ..."
+echo "              ... skip count(${TARGET_DELAY_ARCHIVE_SKIP_COUNT}) ..."
 echo "${TARGET_DELAY_ARCHIVE[*]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |tail -n 1
 printf "\n"
 printf "************************************************************************************************************\n"
