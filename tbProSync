@@ -8,10 +8,11 @@ SOURCE_DB_PASS=tibero
 SOURCE_MODE=TAC
 TARGET_MODE=TAC
 
-
-
+# ProSync Name
 PROSYNC_SYNC_NAME="A3->B3"
+
 # ProSync
+PROSYNC_HOME= # Env $PRS_HOME
 PROSYNC_TOP_ID=prosync_sync
 
 # ProSync SOURCE/TARGET 유저
@@ -110,6 +111,8 @@ echo " ProSync Monitor"
 else 
 echo " ProSync Monitor (Interval ${PMON_INTERVAL} sec)"
 fi
+uptime |awk '{print "  "$0}'
+echo ""
 printf "************************************************************************************************************\n"
 printf " SOURCE/TARGET TSN\n"
 printf "************************************************************************************************************\n"
@@ -153,18 +156,19 @@ function_help(){
        echo ""
        echo "  (Not Yet) ProSync Trouble Monitoring"
        echo ""
-       echo "    ./tbProsync log"
+       echo "    ./tbProsync plog"
        echo ""
-       echo "For more information, refer to the user manual or contact support."
+       echo "For more information, Github URL: https://github.com/younjunsu/tbProsync "
+       echo ""
 }
 
 TBPROSYNC_OPTION1=$1
 TBPROSYNC_OPTION2=$2
 case ${TBPROSYNC_OPTION1} in
-       "sync")   
+       "pmap")   
               function_sync_check
        ;;
-       "monitor"|"mon"|"pmon")
+       "pmon")
               if [ -z "${TBPROSYNC_OPTION2}" ]; then
                      function_monitor
               else
@@ -174,6 +178,9 @@ case ${TBPROSYNC_OPTION1} in
                             sleep ${PMON_INTERVAL}
                      done
               fi             
+       ;;
+       "plog")
+              echo ""
        ;;
        *)
               function_help
