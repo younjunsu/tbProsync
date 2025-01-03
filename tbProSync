@@ -76,35 +76,34 @@ EOF
 `
 
 
-TARGET_DELAY_ARCHIVE_COUNT=`echo "${TARGET_DELAY_ARCHIVE[*]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |wc -l`
-TARGET_DELAY_ARCHIVE_COUNT=$((TARGET_DELAY_ARCHIVE_COUNT - 2))
+TARGET_DELAY_ARCHIVE_TOTAL_COUNT=`echo "${TARGET_DELAY_ARCHIVE[*]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |wc -l`
+TARGET_DELAY_ARCHIVE_SKIP_COUNT=$((TARGET_DELAY_ARCHIVE_TOTAL_COUNT - 2))
 
 
 clear
-echo "  ProSync Monitor Script" 
+echo "  ProSync Monitor Script"
 printf "************************************************************************************************************\n"
-printf " SOURCE/TARGET TSN GAP\n"
+printf " SOURCE/TARGET TSN\n"
 printf "************************************************************************************************************\n"
 printf "  %-30s %-30s %-30s\n" "SOURCE(${SOURCE_MODE})" "TARGET(${TARGET_MODE})" "TSN GAP/CURRENT TIME"
 printf " %-30s %-30s %-30s\n" "------------------" "------------------" "------------------------------------------"
 printf "  %-30s %-30s %-30s\n" "${PROSYNC_SOURCE_USER}" "${PROSYNC_TARGET_USER}" "GAP: ${PROSYNC_TSN_GAP} (CUR: ${PROSYNC_CURRENT_TIME})"
 printf "\n"
 printf "************************************************************************************************************\n"
-printf " SOURCE/TARGET TIME GAP\n"
+printf " SOURCE/TARGET TIME\n"
 printf "************************************************************************************************************\n"
-printf "   - CURRENT TIME      : %-10s\n" "$PROSYNC_CURRENT_TIME"
-printf "   - SOURCE TSN(TIME)  : %-10d         (apply time: %-20s)\n" "$PROSYNC_SOURCE_TSN" "$PROSYNC_SOURCE_TIME"
-printf "   - TARGET TSN(TIME)  : %-10d         (apply time: %-20s)\n" "$PROSYNC_TARGET_TSN" "$PROSYNC_TARGET_TIME"
-printf "   - SOURCE/TARGET GAP : %-10d         (gap time: %-2d hours, %-2d minutes, %-2d seconds)\n" \
-       "$PROSYNC_TSN_GAP" "$PROSYNC_HOURS_TIME_GAP" "$PROSYNC_MINUTES_TIME_GAP" "$PROSYNC_SECONDS_TIME_GAP"
+printf "   - SOURCE TSN: %-10d         (Apply time: %-20s)\n" "$PROSYNC_SOURCE_TSN" "$PROSYNC_SOURCE_TIME"
+printf "   - TARGET TSN: %-10d         (Apply time: %-20s)\n" "$PROSYNC_TARGET_TSN" "$PROSYNC_TARGET_TIME"
+printf "   - TSN    GAP: %-10d         (%d/%d)\n" "$PROSYNC_TSN_GAP" "${PROSYNC_TARGET_TSN}" "${PROSYNC_SOURCE_TSN}"
+printf "   - TIME   GAP: %d hours, %d minutes, %d seconds\n" "$PROSYNC_HOURS_TIME_GAP" "$PROSYNC_MINUTES_TIME_GAP" "$PROSYNC_SECONDS_TIME_GAP"
 printf "\n"
 printf "************************************************************************************************************\n"
 printf " SOURCE/TARGET ARCHVE GAP\n"
 printf "************************************************************************************************************\n"
-echo "   * SOURCE GAP ARCHIVE  (TARGET TSN: ${PROSYNC_TARGET_TSN})"
+echo "   * SOURCE GAP ARCHIVE  (Delay Count: ${TARGET_DELAY_ARCHIVE_TOTAL_COUNT})"
 echo "  -------------------------------------------------"
 echo "${TARGET_DELAY_ARCHIVE[*]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |head -n 1
-echo "          ... skip .... (CNT: ${TARGET_DELAY_ARCHIVE_COUNT})"
+echo "              ... skip ..."
 echo "${TARGET_DELAY_ARCHIVE[*]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |tail -n 1
 printf "\n"
 printf "************************************************************************************************************\n"
