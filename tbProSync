@@ -23,6 +23,10 @@ PROSYNC_SOURCE_DBLINK=p_source
 PROSYNC_TARGET_DBLINK=p_target
 
 #####################################################################################
+function_error_check(){
+       echo
+}
+
 function_monitor(){
 # 소스 
 SOURCE_DATE_TSN=`tbsql ${SOURCE_DB_USER}/${SOURCE_DB_PASS} -s <<EOF
@@ -100,6 +104,7 @@ clear
 echo "##############################################"
 echo "## ProSync Name: ${PROSYNC_SYNC_NAME} (TOP_ID: ${PROSYNC_TOP_ID})"
 echo "##############################################"
+echo ""
 if [ -z ${PMON_INTERVAL} ]; then
 echo " ProSync Monitor"
 else 
@@ -135,19 +140,22 @@ echo ""
 }
 
 function_help(){
-    echo "Usage: ./tbProsync [OPTION]"
-    echo ""
-    echo "Options:"
-    echo "  sync           Synchronize data between source and target."
-    echo "  monitor, mon, pmon"
-    echo "                 Monitor synchronization processes and statuses."
-    echo "  help           Display this help message."
-    echo ""
-    echo "Examples:"
-    echo "  ./tbProsync pmon         # Monitor synchronization processes."
-    echo "  ./tbProsync help         # Show help message."
-    echo ""
-    echo "For more information, refer to the user manual or contact support."
+       echo "Usage: ./tbProsync [OPTION1] [OPTION2]"
+       echo ""
+       echo "  (Not Yet) ProSync MAP"
+       echo ""
+       echo "    ./tbProsync pmap # ProSync Map"
+       echo ""
+       echo "  ProSync TSN SYNC Monitoring"
+       echo ""
+       echo "    ./tbProsync pmon   # Runs Once "
+       echo "    ./tbProsync pmon 5 # Batch mode, input interval"
+       echo ""
+       echo "  (Not Yet) ProSync Trouble Monitoring"
+       echo ""
+       echo "    ./tbProsync log"
+       echo ""
+       echo "For more information, refer to the user manual or contact support."
 }
 
 TBPROSYNC_OPTION1=$1
