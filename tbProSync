@@ -76,12 +76,17 @@ EOF
 `
 
 
-TARGET_DELAY_ARCHIVE_TOTAL_COUNT=`echo "${TARGET_DELAY_ARCHIVE[@]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |wc -l`
+TARGET_DELAY_ARCHIVE_TOTAL_COUNT=`echo "${TARGET_DELAY_ARCHIVE[@]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |wc -l`
+TARGET_DELAY_ARCHIVE_HEAD=`echo ${TARGET_DELAY_ARCHIVE[@]} | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |head -n 1`
+TARGET_DELAY_ARCHIVE_TAIL=`echo ${TARGET_DELAY_ARCHIVE[@]} | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |tail -n 1`
 
-if [ ${TARGET_DELAY_ARCHIVE_TOTAL_COUNT} -le 2 ]; then
-    TARGET_DELAY_ARCHIVE_SKIP_COUNT="0"
+if [ ${TARGET_DELAY_ARCHIVE_TOTAL_COUNT} -le 1 ]; then
+       TARGET_DELAY_ARCHIVE_SKIP_COUNT="0"
+       TARGET_DELAY_ARCHIVE_TAIL=
+elif [ ${TARGET_DELAY_ARCHIVE_TOTAL_COUNT} -le 2 ]; then
+       TARGET_DELAY_ARCHIVE_SKIP_COUNT="0"
 elif [ ${TARGET_DELAY_ARCHIVE_TOTAL_COUNT} -gt 2 ]; then
-    TARGET_DELAY_ARCHIVE_SKIP_COUNT=$((TARGET_DELAY_ARCHIVE_TOTAL_COUNT - 2))
+       TARGET_DELAY_ARCHIVE_SKIP_COUNT=$((TARGET_DELAY_ARCHIVE_TOTAL_COUNT - 2))
 else
        TARGET_DELAY_ARCHIVE_SKIP_COUNT="error"
 fi
@@ -89,7 +94,11 @@ fi
 
 
 clear
-echo "  ProSync Monitor Script"
+if [ -z ${PMON_INTERVAL} ]; then
+       echo "  ProSync Monitor"
+else 
+       echo "  ProSync Monitor (Interval Mode: ${PMON_INTERVAL} sec)"
+fi
 printf "************************************************************************************************************\n"
 printf " SOURCE/TARGET TSN\n"
 printf "************************************************************************************************************\n"
@@ -110,24 +119,24 @@ printf " SOURCE/TARGET ARCHVE GAP\n"
 printf "************************************************************************************************************\n"
 echo "   * SOURCE GAP ARCHIVE  (Delay Count: ${TARGET_DELAY_ARCHIVE_TOTAL_COUNT})"
 echo "  -------------------------------------------------"
-echo "${TARGET_DELAY_ARCHIVE[*]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |head -n 1
+echo "${TARGET_DELAY_ARCHIVE_HEAD}"
 echo "              ... skip count(${TARGET_DELAY_ARCHIVE_SKIP_COUNT}) ..."
-echo "${TARGET_DELAY_ARCHIVE[*]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%4==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |tail -n 1
+echo "${TARGET_DELAY_ARCHIVE_TAIL}"
 printf "\n"
-printf "************************************************************************************************************\n"
-printf " ProSync Meta Checking\n"
-printf "************************************************************************************************************\n"
-echo "   * Topoloys ID : ${PROSYNC_TOP_ID}"
-echo "  -------------------------------------------------"
-echo "    * SOURCE META"
-echo "     - PROSYNC_SOURCE_MODE: ${SOURCE_DB_USER}"
-echo "     - PROSYNC_SOURCE_USER ${PROSYNC_SOURCE_USER}"
-echo "     - PROSYNC_SOURCE_DBLINK: ${PROSYNC_SOURCE_DBLINK}"
-echo ""
-echo "    * TARGET META"
-echo "     - PROSYNC_TARGET_MODE: ${TARGET_MODE}"
-echo "     - PROSYNC_TARGET_USER: ${PROSYNC_TARGET_USER}"
-echo "     - PROSYNC_TARGET_DBLINK: ${PROSYNC_TARGET_DBLINK}"
+# printf "************************************************************************************************************\n"
+# printf " ProSync Meta Checking\n"
+# printf "************************************************************************************************************\n"
+# echo "   * Topoloys ID : ${PROSYNC_TOP_ID}"
+# echo "  -------------------------------------------------"
+# echo "    * SOURCE META"
+# echo "     - PROSYNC_SOURCE_MODE: ${SOURCE_MODE}"
+# echo "     - PROSYNC_SOURCE_USER ${PROSYNC_SOURCE_USER}"
+# echo "     - PROSYNC_SOURCE_DBLINK: ${PROSYNC_SOURCE_DBLINK}"
+# echo ""
+# echo "    * TARGET META"
+# echo "     - PROSYNC_TARGET_MODE: ${TARGET_MODE}"
+# echo "     - PROSYNC_TARGET_USER: ${PROSYNC_TARGET_USER}"
+# echo "     - PROSYNC_TARGET_DBLINK: ${PROSYNC_TARGET_DBLINK}"
 echo ""
 echo ""
 
@@ -150,13 +159,21 @@ function_help(){
 }
 
 TBPROSYNC_OPTION1=$1
-
+TBPROSYNC_OPTION2=$2
 case ${TBPROSYNC_OPTION1} in
        "sync")   
               function_sync_check
        ;;
        "monitor"|"mon"|"pmon")
-              function_monitor
+              if [ -z "${TBPROSYNC_OPTION2}" ]; then
+                     function_monitor
+              else
+                     PMON_INTERVAL=${TBPROSYNC_OPTION2}
+                     while true; do
+                            function_monitor
+                            sleep ${PMON_INTERVAL}
+                     done
+              fi             
        ;;
        *)
               function_help
