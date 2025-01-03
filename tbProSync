@@ -127,8 +127,8 @@ EOF
 
 
 TARGET_DELAY_ARCHIVE_TOTAL_COUNT=`echo "${TARGET_DELAY_ARCHIVE[@]}" | awk '{for (i=1; i<=NF; i++) printf $i (i%5==0 ? "\n" : " ")}' |wc -l`
-TARGET_DELAY_ARCHIVE_HEAD=`echo ${TARGET_DELAY_ARCHIVE[@]} | awk '{for (i=1; i<=NF; i++) printf $i (i%5==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |head -n 1`
-TARGET_DELAY_ARCHIVE_TAIL=`echo ${TARGET_DELAY_ARCHIVE[@]} | awk '{for (i=1; i<=NF; i++) printf $i (i%5==0 ? "\n" : " ")}' |awk '{print "     - "$0}' |tail -n 1`
+TARGET_DELAY_ARCHIVE_HEAD=`echo ${TARGET_DELAY_ARCHIVE[@]} | awk '{for (i=1; i<=NF; i++) printf $i (i%5==0 ? "\n" : " ")}' |awk '{print "   - "$0}' |head -n 1`
+TARGET_DELAY_ARCHIVE_TAIL=`echo ${TARGET_DELAY_ARCHIVE[@]} | awk '{for (i=1; i<=NF; i++) printf $i (i%5==0 ? "\n" : " ")}' |awk '{print "   - "$0}' |tail -n 1`
 
 if [ ${TARGET_DELAY_ARCHIVE_TOTAL_COUNT} -le 1 ]; then
        TARGET_DELAY_ARCHIVE_SKIP_COUNT="0"
@@ -141,7 +141,28 @@ else
        TARGET_DELAY_ARCHIVE_SKIP_COUNT="error"
 fi
 
-
+PROSYNC_LOG_TABLE_COUNT=`tbsql ${SOURCE_DB_USER}/${SOURCE_DB_PASS} -s <<EOF
+set pagesize 0
+set feedback off
+set linesize 1000
+select count(*) from dba_log_groups;
+EOF
+`
+PROSYNC_SYNC_TABLE_COUNT=`tbsql ${SOURCE_DB_USER}/${SOURCE_DB_PASS} -s <<EOF
+set pagesize 0
+set feedback off
+set linesize 1000
+select count(*) from \${PROSYNC_TARGET_USER}.prs_obj_list@\${PROSYNC_TARGET_DBLINK};
+EOF
+`
+PROSYNC_LOG_SYNC_TABLE_GAP=`tbsql ${SOURCE_DB_USER}/${SOURCE_DB_PASS} -s <<EOF
+set pagesize 0
+set feedback off
+set linesize 1000
+select count(*) from dba_log_groups dlg, \${PROSYNC_TARGET_USER}.prs_obj_list@\${PROSYNC_TARGET_DBLINK} pol
+where dlg.owner=pol.owner and dlg.table_name=pol.name;
+EOF
+`
 
 clear
 echo "##############################################"
@@ -165,9 +186,9 @@ printf "\n"
 printf "************************************************************************************************************\n"
 printf " SOURCE/TARGET TIME\n"
 printf "************************************************************************************************************\n"
-printf "   - SOURCE TSN: %-10d         (Apply time: %-20s)\n" "$PROSYNC_SOURCE_TSN" "$PROSYNC_SOURCE_TIME"
-printf "   - TARGET TSN: %-10d         (Apply time: %-20s)\n" "$PROSYNC_TARGET_TSN" "$PROSYNC_TARGET_TIME"
-printf "   - TSN    GAP: %-10d         (%d/%d)\n" "$PROSYNC_TSN_GAP" "${PROSYNC_TARGET_TSN}" "${PROSYNC_SOURCE_TSN}"
+printf "   - SOURCE TSN: %-10d         (Apply Time:%20s)\n" "$PROSYNC_SOURCE_TSN" "$PROSYNC_SOURCE_TIME"
+printf "   - TARGET TSN: %-10d         (Apply Time:%20s)\n" "$PROSYNC_TARGET_TSN" "$PROSYNC_TARGET_TIME"
+printf "   - TSN    GAP: %d(%d/%d)\n" "$PROSYNC_TSN_GAP" "${PROSYNC_TARGET_TSN}" "${PROSYNC_SOURCE_TSN}"
 printf "   - TIME   GAP: %d hours, %d minutes, %d seconds\n" "$PROSYNC_HOURS_TIME_GAP" "$PROSYNC_MINUTES_TIME_GAP" "$PROSYNC_SECONDS_TIME_GAP"
 printf "\n"
 printf "************************************************************************************************************\n"
@@ -178,6 +199,14 @@ echo "  -------------------------------------------------"
 echo "${TARGET_DELAY_ARCHIVE_HEAD}"
 echo "              ... skip (${TARGET_DELAY_ARCHIVE_SKIP_COUNT}) ..."
 echo "${TARGET_DELAY_ARCHIVE_TAIL}"
+printf "\n"
+printf "************************************************************************************************************\n"
+printf " SOURCE/TARGET Sync Object\n"
+printf "************************************************************************************************************\n"
+printf "  %-30s %-30s %-30s\n" "ProSync" "LOG Group" "GAP"
+printf " %-30s %-30s %-30s\n" "------------------" "------------------" "------------------"
+printf "  %-30s %-30s %-30s\n" "${PROSYNC_LOG_TABLE_COUNT}" "${PROSYNC_SYNC_TABLE_COUNT}" "${PROSYNC_LOG_SYNC_TABLE_GAP}"
+printf "\n"
 printf "\n"
 echo ""
 echo ""
