@@ -419,30 +419,3 @@ case ${TBPROSYNC_OPTION1} in
               function_help
        ;;
 esac
-
-
-
-#####################################################################################
-# 디버깅 소스
-#####################################################################################
-# 테스트
-# SOURCE/TARGET 동기화 차이 확인
-# PROSYNC_SOURCE_TSN=$((RANDOM % 32767)) #랜덤 16비트 정수의 최대 값 32767
-# PROSYNC_TARGET_TSN=$((RANDOM % 32767)) #랜덤 16비트 정수의 최대 값 32767
-# PROSYNC_TSN_GAP=$((PROSYNC_SOURCE_TSN - PROSYNC_TARGET_TSN)) #랜덤 16비트 정수의 최대 값 32767
-
-# PROSYNC_CURRENT_TIME=`date +%Y/%m/%d" "%T`
-
-# PROSYNC_SOURCE_TIME=`date +%Y/%m/%d" "%T`
-# PROSYNC_TARGET_TIME=`date +%Y/%m/%d" "%T`
-
-# PROSYNC_TARGET_TSN=$((RANDOM % 32767)) #랜덤 16비트 정수의 최대 값 32767
-
-# PROSYNC_SOURCE_UNIX_TIME=`date +%s`
-# PROSYNC_TARGET_UNIX_TIME=`date +%s`
-# PROSYNC_TARGET_UNIX_TIME=$((PROSYNC_TARGET_UNIX_TIME - 1))
-# PROSYNC_UNIX_TIME_GAP=$((PROSYNC_SOURCE_UNIX_TIME - PROSYNC_TARGET_UNIX_TIME))
-
-# ROSYNC_HOURS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP / 3600))  # 시간
-# PROSYNC_MINUTES_TIME_GAP=$(((PROSYNC_UNIX_TIME_GAP % 3600) / 60))  # 분
-# PROSYNC_SECONDS_TIME_GAP=$((PROSYNC_UNIX_TIME_GAP % 60))  # 초
