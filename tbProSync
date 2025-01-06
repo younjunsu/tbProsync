@@ -1,40 +1,167 @@
 #!/bin/bash
 
+# ProSync Name  (User Setting)
+PROSYNC_SYNC_NAME="A3->B3"
 # SOURCE DB/USR
 SOURCE_DB_USER=sys
 SOURCE_DB_PASS=tibero
-
 # SOURCE/TARGET 구성
 SOURCE_MODE=TAC
 TARGET_MODE=TAC
-
-# ProSync Name
-PROSYNC_SYNC_NAME="A3->B3"
-
-# ProSync
-PROSYNC_HOME= # Env $PRS_HOME
+# ProSync HOME PATH ($PRS_HOME)
+PROSYNC_HOME=
+# ProSync Topology ID
 PROSYNC_TOP_ID=prosync_sync
-
 # ProSync SOURCE/TARGET 유저
 PROSYNC_SOURCE_USER=sys
 PROSYNC_TARGET_USER=sys
-
-# ProSync SOURCE/TARGET 디비 링크
-PROSYNC_SOURCE_DBLINK=p_source
+# ProSync TARGET DB LINK
 PROSYNC_TARGET_DBLINK=p_target
-
 #####################################################################################
 function_error_check(){
+       ERROR_FLAG=N
        function_error_list(){
-              echo ""
+              error_source_connect_check(){
+ERROR_SOURCE_CONNECT=`tbsql ${SOURCE_DB_USER}/${SOURCE_DB_PASS} -s <<EOF
+set pagesize 0
+set feedback off
+select 'CONN' from dual;
+EOF`
+                     ERROR_SOURCE_CONNECT_CHECK=`echo ${ERROR_SOURCE_CONNECT[@]} |grep -v TBR |grep -o "CONN"`
+
+                     if [ -z "${SOURCE_DB_USER}" ] || [ -z "${SOURCE_DB_PASS}" ]
+                     then
+                            ERROR_FLAG=Y
+                     elif [ "CONN" != "${ERROR_SOURCE_CONNECT_CHECK}" ]
+                     then
+                            ERROR_FLAG=Y
+                            echo "  ERROR - Source Connection Checking."
+                            echo "    - Not Connected"
+                     elif [ "CONN" = "${ERROR_SOURCE_CONNECT_CHECK}" ]
+                     then
+                            echo "  SUCCESS - Source Connection Checking."
+                            echo "    - Connected"
+                     fi
+              }
+
+
+              error_target_dblink_check(){
+ERROR_TARGET_DBLINK_CONNECT=`tbsql ${SOURCE_DB_USER}/${SOURCE_DB_PASS} -s <<EOF
+set pagesize 0
+set feedback off
+select 'CONN' from dual@${PROSYNC_TARGET_DBLINK};
+EOF`
+                     ERROR_TARGET_DBLINK_CONNECT_CHECK=`echo ${ERROR_TARGET_DBLINK_CONNECT[@]} |grep -v TBR |grep -o "CONN"`
+                     if [ -z "${SOURCE_DB_USER}" ] || [ -z "${SOURCE_DB_PASS}" ]
+                     then
+                            ERROR_FLAG=Y
+                     elif [ "CONN" != "${ERROR_TARGET_DBLINK_CONNECT_CHECK}" ]
+                     then
+                            ERROR_FLAG=Y
+                            echo "  ERROR - Target Connection Checking."
+                            echo "    - Not Connected"
+                     elif [ "CONN" = "${ERROR_TARGET_DBLINK_CONNECT_CHECK}" ]
+                     then
+                            echo "  SUCCESS - Target Connection Checking."
+                            echo "    - Connected"
+                     fi
+              }
+
+              error_source_tsn_check(){
+ERROR_SOURCE_TSN=$(tbsql ${SOURCE_DB_USER}/${SOURCE_DB_PASS} -s <<EOF
+set pagesize 0
+set feedback off
+select 'CONN' from v\$database;
+EOF
+)
+                     ERROR_SOURCE_TSN_CHECK=`echo ${ERROR_SOURCE_TSN[@]} |grep -v TBR |grep -o "CONN"`
+                     if [ -z "${SOURCE_DB_USER}" ] || [ -z "${SOURCE_DB_PASS}" ]
+                     then
+                            ERROR_FLAG=Y
+                     elif [ "CONN" != "${ERROR_SOURCE_TSN_CHECK}" ]
+                     then
+                            ERROR_FLAG=Y
+                            echo "  ERROR - Source TSN Checking."
+                            echo "    - Not Connected"
+                     elif [ "CONN" = "${ERROR_SOURCE_TSN_CHECK}" ]
+                     then
+                            echo "  SUCCESS - Source TSN Checking."
+                            echo "    - Connected"
+                     fi
+              }
+              
+              error_target_tsn_check(){
+ERROR_TARGET_TSN=$(tbsql ${SOURCE_DB_USER}/${SOURCE_DB_PASS} -s <<EOF
+set pagesize 0
+set feedback off
+select 'CONN' from ${PROSYNC_TARGET_USER}.prs_lct@${PROSYNC_TARGET_DBLINK};
+EOF
+)
+                     ERROR_TARGET_TSN_CHECK=`echo ${ERROR_TARGET_TSN[@]} |grep -v TBR |grep -o "CONN"`
+                     if [ -z "${SOURCE_DB_USER}" ] || [ -z "${SOURCE_DB_PASS}" ]
+                     then
+                            ERROR_FLAG=Y
+                     elif [ "CONN" != "${ERROR_TARGET_TSN_CHECK}" ]
+                     then
+                            ERROR_FLAG=Y
+                            echo "  ERROR - Target TSN Checking."
+                            echo "    - Not Connected"
+                     elif [ "CONN" = "${ERROR_TARGET_TSN_CHECK}" ]
+                     then
+                            echo "  SUCCESS - Target TSN Checking."
+                            echo "    - Connected"
+                     fi                     
+              }
+
+              error_sciprt_parameter_check(){
+                     : "${SOURCE_DB_USER:?SOURCE_DB_USER is not set}"
+                     : "${SOURCE_DB_PASS:?SOURCE_DB_PASS is not set}"
+                     : "${SOURCE_MODE:?SOURCE_MODE is not set}"
+                     : "${TARGET_MODE:?TARGET_MODE is not set}"
+                     : "${PROSYNC_SYNC_NAME:?PROSYNC_SYNC_NAME is not set}"
+                     #: "${PROSYNC_HOME:?PROSYNC_HOME is not set}"
+                     : "${PROSYNC_TOP_ID:?PROSYNC_TOP_ID is not set}"
+                     : "${PROSYNC_SOURCE_USER:?PROSYNC_SOURCE_USER is not set}"
+                     : "${PROSYNC_TARGET_USER:?PROSYNC_TARGET_USER is not set}"
+                     #: "${PROSYNC_SOURCE_DBLINK:?PROSYNC_SOURCE_DBLINK is not set}"
+                     : "${PROSYNC_TARGET_DBLINK:?PROSYNC_TARGET_DBLINK is not set}"              
+                     echo "   - Script Parameter - SOURCE_DB_USER: ${SOURCE_DB_USER}"s
+                     echo "   - Script Parameter - SOURCE_DB_PASS: ${SOURCE_DB_PASS}"
+                     echo "   - Script Parameter - SOURCE_MODE: ${SOURCE_MODE}"
+                     echo "   - Script Parameter - TARGET_MODE: ${TARGET_MODE}"
+                     echo "   - Script Parameter - PROSYNC_SYNC_NAME: ${PROSYNC_SYNC_NAME}"
+                     echo "   - Script Parameter - PROSYNC_HOME: ${PROSYNC_HOME}"
+                     echo "   - Script Parameter - PROSYNC_TOP_ID: ${PROSYNC_TOP_ID}"
+                     echo "   - Script Parameter - PROSYNC_SOURCE_USER: ${PROSYNC_SOURCE_USER}"
+                     echo "   - Script Parameter - PROSYNC_TARGET_USER: ${PROSYNC_TARGET_USER}"
+                     echo "   - Script Parameter - PROSYNC_SOURCE_DBLINK: ${PROSYNC_SOURCE_DBLINK}"
+                     echo "   - Script Parameter - PROSYNC_TARGET_DBLINK: ${PROSYNC_TARGET_DBLINK}"
+              }
+
+              
        }
+
+       funciton_config_error_check(){
+              function_error_list
+              error_sciprt_parameter_check
+              error_source_connect_check
+              error_target_dblink_check
+              error_source_tsn_check
+              error_target_tsn_check
+       }
+
 
        function_pmap_error_check(){
               echo "pmap error"
        }
 
        funciton_pmon_error_check(){
-              echo "pmon error"
+              function_error_list
+              error_sciprt_parameter_check
+              error_source_connect_check
+              error_target_dblink_check
+              error_source_tsn_check
+              error_target_tsn_check
        }
 
        function_plog_error_check(){
@@ -42,6 +169,9 @@ function_error_check(){
        }
 
        case ${TBPROSYNC_MODE} in
+              "check")
+                     funciton_config_error_check
+              ;;     
               "pmap")
                      function_pmap_error_check
               ;;
@@ -55,8 +185,22 @@ function_error_check(){
                      echo " ERROR "
               ;;              
        esac
+
+       if [ "Y" == "${ERROR_FLAG}" ]
+       then
+              exit 0
+       fi              
 }
 
+
+function_check()
+{
+       clear
+       echo " tbProSync Configuration Check"
+       printf "************************************************************************************************************\n"
+       printf " Configuration Checking for Script\n"
+       printf "************************************************************************************************************\n"
+}
 
 function_pmap(){
        echo "function_pmap"
@@ -219,6 +363,10 @@ function_plog(){
 function_help(){
        echo "Usage: ./tbProsync [OPTION1] [OPTION2]"
        echo ""
+       echo "  tbProSync Configuration Checking"
+       echo ""
+       echo "    ./tbProsync check   # Setting Checking "
+       echo ""       
        # echo "  (Not Yet) ProSync MAP"
        # echo ""
        # echo "    ./tbProsync pmap # ProSync Map"
@@ -239,10 +387,15 @@ function_help(){
 TBPROSYNC_OPTION1=$1
 TBPROSYNC_OPTION2=$2
 case ${TBPROSYNC_OPTION1} in
+       "check")
+              TBPROSYNC_MODE="check"
+              function_check
+              function_error_check
+       ;;
        "pmap")
               TBPROSYNC_MODE="pmap"
-              function_error_check
-              function_pmap
+              # function_error_check
+              # function_pmap
        ;;
        "pmon")
               TBPROSYNC_MODE="pmon"
@@ -259,8 +412,8 @@ case ${TBPROSYNC_OPTION1} in
        ;;
        "plog")
               TBPROSYNC_MODE="plog"
-              function_error_check
-              function_plog
+              # function_error_check
+              # function_plog
        ;;
        *)
               function_help
