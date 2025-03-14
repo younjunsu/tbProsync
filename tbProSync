@@ -17,6 +17,7 @@ PROSYNC_SOURCE_USER=sys
 PROSYNC_TARGET_USER=sys
 # ProSync TARGET DB LINK
 PROSYNC_TARGET_DBLINK=p_target
+
 #####################################################################################
 function_error_check(){
        ERROR_FLAG=N
