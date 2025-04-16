@@ -9,14 +9,14 @@ SOURCE_DB_PASS=tibero
 SOURCE_MODE=TAC
 TARGET_MODE=TAC
 # ProSync HOME PATH ($PRS_HOME)
-PROSYNC_HOME=
+PROSYNC_HOME=/root/prosync4
 # ProSync Topology ID
-PROSYNC_TOP_ID=prosync_sync
+PROSYNC_TOP_ID=prs_test
 # ProSync SOURCE/TARGET 유저
 PROSYNC_SOURCE_USER=sys
 PROSYNC_TARGET_USER=sys
 # ProSync TARGET DB LINK
-PROSYNC_TARGET_DBLINK=p_target
+PROSYNC_TARGET_DBLINK=ptarget
 
 #####################################################################################
 function_error_check(){
